@@ -113,10 +113,24 @@ inline lv_obj_t *screen_lock_pin_pad_create_dot(lv_obj_t *parent, lv_coord_t siz
   return dot;
 }
 
+// A phone-style dial pad: 1-9 in a 3x3 grid, with 0 centered on its own row
+// underneath, so a PIN can use any of the 10 digits.
+static const char *const kScreenLockPinPadDigits[10] = {
+  "1", "2", "3",
+  "4", "5", "6",
+  "7", "8", "9",
+  "0",
+};
+
 // A locked screen with a PIN configured shows this instead of the normal
 // home screen, on the panel's own top LVGL layer so nothing underneath can
 // be reached. It never offers a way to dismiss itself -- the only way out is
 // the correct PIN, which is the entire point of Screen Lock's PIN option.
+//
+// Layout works bottom-up from the smallest supported panel (480x480): the
+// title's real rendered height is measured first, and the keypad's key size
+// is then derived from whatever vertical space is actually left over, so it
+// always fits instead of assuming a fixed size that might not.
 inline void screen_lock_pin_pad_show() {
   if (screen_lock_pin_pad_showing()) return;
   ScreenLockPinPadUi &ui = screen_lock_pin_pad_ui();
@@ -125,6 +139,8 @@ inline void screen_lock_pin_pad_show() {
 
   ControlModalLayout layout = control_modal_calc_layout(100);
   lv_coord_t short_side = layout.short_side;
+  lv_coord_t sw = layout.sw;
+  lv_coord_t sh = layout.sh;
 
   ui.overlay = lv_obj_create(lv_layer_top());
   lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
@@ -134,75 +150,72 @@ inline void screen_lock_pin_pad_show() {
   lv_obj_set_style_pad_all(ui.overlay, 0, LV_PART_MAIN);
   lv_obj_clear_flag(ui.overlay, LV_OBJ_FLAG_SCROLLABLE);
 
-  lv_obj_t *column = lv_obj_create(ui.overlay);
-  lv_obj_set_size(column, lv_pct(90), LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_opa(column, LV_OPA_TRANSP, LV_PART_MAIN);
-  lv_obj_set_style_border_width(column, 0, LV_PART_MAIN);
-  lv_obj_set_style_pad_all(column, 0, LV_PART_MAIN);
-  lv_obj_set_style_pad_row(column, control_modal_scaled_px(20, short_side), LV_PART_MAIN);
-  lv_obj_set_layout(column, LV_LAYOUT_FLEX);
-  lv_obj_set_style_flex_flow(column, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
-  lv_obj_set_style_flex_main_place(column, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
-  lv_obj_set_style_flex_cross_place(column, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
-  lv_obj_clear_flag(column, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_center(column);
+  lv_coord_t outer_inset = control_modal_scaled_px(20, short_side);
+  if (outer_inset < 10) outer_inset = 10;
 
-  lv_obj_t *title = lv_label_create(column);
+  lv_obj_t *title = lv_label_create(ui.overlay);
   lv_label_set_display_text(title, espcontrol_i18n("Enter Pin"));
   lv_obj_set_style_text_color(title, lv_color_hex(DARK_TEXT_PRIMARY), LV_PART_MAIN);
   lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+  lv_obj_update_layout(title);
+  lv_coord_t title_h = lv_obj_get_height(title);
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, outer_inset);
 
-  lv_obj_t *dots_row = lv_obj_create(column);
-  lv_obj_set_size(dots_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_opa(dots_row, LV_OPA_TRANSP, LV_PART_MAIN);
-  lv_obj_set_style_border_width(dots_row, 0, LV_PART_MAIN);
-  lv_obj_set_style_pad_all(dots_row, 0, LV_PART_MAIN);
-  lv_coord_t dot_gap = control_modal_scaled_px(14, short_side);
-  if (dot_gap < 8) dot_gap = 8;
-  lv_obj_set_style_pad_column(dots_row, dot_gap, LV_PART_MAIN);
-  lv_obj_set_layout(dots_row, LV_LAYOUT_FLEX);
-  lv_obj_set_style_flex_flow(dots_row, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
-  lv_obj_clear_flag(dots_row, LV_OBJ_FLAG_SCROLLABLE);
-  lv_coord_t dot_size = control_modal_scaled_px(18, short_side);
-  if (dot_size < 12) dot_size = 12;
-  if (dot_size > 26) dot_size = 26;
+  lv_coord_t section_gap = control_modal_scaled_px(16, short_side);
+  if (section_gap < 8) section_gap = 8;
+  lv_coord_t dot_gap = control_modal_scaled_px(12, short_side);
+  if (dot_gap < 6) dot_gap = 6;
+  lv_coord_t dot_size = control_modal_scaled_px(16, short_side);
+  if (dot_size < 10) dot_size = 10;
+  if (dot_size > 22) dot_size = 22;
+
+  lv_coord_t dots_y = outer_inset + title_h + section_gap;
+  lv_coord_t dots_total_w =
+    dot_size * static_cast<lv_coord_t>(ui.dots.size()) +
+    dot_gap * static_cast<lv_coord_t>(ui.dots.size() - 1);
+  lv_coord_t dots_start_x = (sw - dots_total_w) / 2;
   for (size_t i = 0; i < ui.dots.size(); i++) {
-    ui.dots[i] = screen_lock_pin_pad_create_dot(dots_row, dot_size);
+    ui.dots[i] = screen_lock_pin_pad_create_dot(ui.overlay, dot_size);
+    lv_obj_set_pos(ui.dots[i],
+      dots_start_x + static_cast<lv_coord_t>(i) * (dot_size + dot_gap), dots_y);
   }
 
-  lv_coord_t key_size = control_modal_scaled_px(84, short_side);
-  if (key_size < 56) key_size = 56;
-  if (key_size > 140) key_size = 140;
-  lv_coord_t key_gap = control_modal_scaled_px(16, short_side);
-  if (key_gap < 8) key_gap = 8;
+  // Whatever height remains below the dots (down to the bottom inset) is the
+  // entire budget for the 4-row keypad -- dividing it by the row count is
+  // what actually guarantees no overflow, rather than hoping a fixed
+  // reference size happens to fit.
+  lv_coord_t keypad_top = dots_y + dot_size + section_gap;
+  lv_coord_t keypad_bottom = sh - outer_inset;
+  lv_coord_t keypad_h = keypad_bottom - keypad_top;
+  if (keypad_h < 4 * 36) keypad_h = 4 * 36;  // defensive floor; not expected in practice
+  lv_coord_t keypad_w = sw - outer_inset * 2;
 
-  // A phone-style dial pad: 1-9 in a 3x3 grid, with 0 centered on its own
-  // row underneath.
-  static const char *kKeyDigits[10] = {
-    "1", "2", "3",
-    "4", "5", "6",
-    "7", "8", "9",
-    "0",
-  };
-  for (int row = 0; row < 4; row++) {
-    int cols_in_row = row < 3 ? 3 : 1;
-    lv_obj_t *key_row = lv_obj_create(column);
-    lv_obj_set_size(key_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(key_row, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_width(key_row, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(key_row, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_column(key_row, key_gap, LV_PART_MAIN);
-    lv_obj_set_layout(key_row, LV_LAYOUT_FLEX);
-    lv_obj_set_style_flex_flow(key_row, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
-    lv_obj_clear_flag(key_row, LV_OBJ_FLAG_SCROLLABLE);
-    for (int col = 0; col < cols_in_row; col++) {
-      int index = row < 3 ? row * 3 + col : 9;
-      lv_obj_t *key_btn = control_modal_create_round_button(
-        key_row, key_size, kKeyDigits[index], nullptr, DARK_BORDER, SECONDARY_GREY);
-      ui.keys[index] = key_btn;
-      lv_obj_add_event_cb(key_btn, screen_lock_pin_pad_key_cb, LV_EVENT_CLICKED,
-        const_cast<char *>(kKeyDigits[index]));
-    }
+  lv_coord_t key_gap = control_modal_scaled_px(12, short_side);
+  if (key_gap < 6) key_gap = 6;
+  lv_coord_t key_size_w = (keypad_w - key_gap * 2) / 3;
+  lv_coord_t key_size_h = (keypad_h - key_gap * 3) / 4;
+  lv_coord_t key_size = key_size_w < key_size_h ? key_size_w : key_size_h;
+  lv_coord_t max_key_size = control_modal_scaled_px(96, short_side);
+  if (max_key_size < 56) max_key_size = 56;
+  if (key_size > max_key_size) key_size = max_key_size;
+  if (key_size < 36) key_size = 36;
+
+  lv_coord_t total_w = key_size * 3 + key_gap * 2;
+  lv_coord_t total_h = key_size * 4 + key_gap * 3;
+  lv_coord_t start_x = (sw - total_w) / 2;
+  lv_coord_t start_y = keypad_top + (keypad_h - total_h) / 2;
+  if (start_y < keypad_top) start_y = keypad_top;
+
+  for (int i = 0; i < 10; i++) {
+    int row = i < 9 ? i / 3 : 3;
+    int col = i < 9 ? i % 3 : 1;  // 0 centers under the middle column
+    lv_obj_t *key_btn = control_modal_create_round_button(
+      ui.overlay, key_size, kScreenLockPinPadDigits[i], nullptr, DARK_BORDER, SECONDARY_GREY);
+    ui.keys[i] = key_btn;
+    lv_obj_set_pos(key_btn, start_x + col * (key_size + key_gap),
+      start_y + row * (key_size + key_gap));
+    lv_obj_add_event_cb(key_btn, screen_lock_pin_pad_key_cb, LV_EVENT_CLICKED,
+      const_cast<char *>(kScreenLockPinPadDigits[i]));
   }
 
   screen_lock_pin_pad_update_dots();
