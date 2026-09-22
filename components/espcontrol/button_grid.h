@@ -61,5 +61,6 @@
 #include "button_grid_subpages.h"
 #include "network_status.h"
 #include "button_grid_alarm.h"
+#include "screen_lock_pin_pad.h"
 #include "button_grid_navigation.h"
 #include "button_grid_grid.h"

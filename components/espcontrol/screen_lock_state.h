@@ -1,6 +1,8 @@
 #pragma once
 
 #include "display_text.h"
+#include "screen_lock_pin.h"
+#include "screen_lock_pin_store.h"
 
 // Internal implementation detail for button_grid.h. Include button_grid.h from device YAML.
 
@@ -137,11 +139,33 @@ inline void screen_lock_apply() {
   }
 }
 
+// Whether unlocking the screen requires the PIN keypad instead of a plain
+// tap. False keeps Screen Lock's original unauthenticated toggle behaviour
+// for panels that have not set up a PIN.
+inline bool screen_lock_requires_pin() {
+  return espcontrol::screen_lock_pin_is_set();
+}
+
 inline void screen_lock_set_enabled(bool locked) {
   screen_lock_enabled() = locked;
+  // The locked/unlocked state only needs to survive a reboot when a PIN is
+  // protecting it -- otherwise a power cycle keeps its historical, transient
+  // default of unlocked.
+  if (screen_lock_requires_pin()) espcontrol::screen_lock_persist_locked(locked);
   screen_lock_apply();
 }
 
-inline void screen_lock_toggle() {
-  screen_lock_set_enabled(!screen_lock_enabled());
+// Locking is always allowed with a tap. Unlocking needs the PIN keypad once
+// one is configured; without a PIN, a tap keeps the original unauthenticated
+// toggle behaviour. Defined in screen_lock_pin_pad.h, which is included
+// later (it needs the keypad UI helpers); forward-declared here so the rest
+// of this file's boot/persistence helpers can still call it by name.
+inline void screen_lock_toggle();
+
+// Restores the persisted locked state at boot. Only takes effect while a PIN
+// is set; call once, after the screen lock card (if any) has registered.
+inline void screen_lock_restore_persisted_state() {
+  if (!screen_lock_requires_pin()) return;
+  screen_lock_enabled() = espcontrol::screen_lock_persisted_locked();
+  screen_lock_apply();
 }

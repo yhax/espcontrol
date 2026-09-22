@@ -52,12 +52,14 @@ import { createStateLoaderFeature, type StateLoaderFeature } from "./application
 import { createGridMigrationFeature } from "./application/grid_migration";
 import { createArtworkPostApiFeature } from "./application/artwork_post_api";
 import { createScreenSchedulePostApiFeature } from "./application/screen_schedule_post_api";
+import { createScreenLockPinPostApiFeature } from "./application/screen_lock_pin_post_api";
 import { createClockBarPostApiFeature } from "./application/clock_bar_post_api";
 import { createControlsShellFeature, renderPanelBrand } from "./application/controls_shell";
 import { createSettingsPageHelpersFeature, type SettingsPageHelpersFeature } from "./application/settings_page_helpers";
 import { createSettingsScheduleSectionFeature } from "./application/settings_schedule_section";
 import { createSettingsCoverArtSectionFeature } from "./application/settings_cover_art_section";
 import { createSettingsSystemSectionFeature } from "./application/settings_system_section";
+import { createSettingsScreenLockSectionFeature } from "./application/settings_screen_lock_section";
 import { createSettingsPageFeature, type SettingsPageFeature } from "./application/settings_page";
 import { createControlsFieldsFeature, type ControlsFieldsFeature } from "./application/controls_fields";
 import { createPreviewRenderFeature, type PreviewRenderFeature } from "./application/preview_render";
@@ -494,6 +496,7 @@ function composeApplicationContext(): ApplicationContext {
   firmwarePostApi = createFirmwareUpdatePostApiFeature(entityState, requestApi);
   const artworkPostApi = createArtworkPostApiFeature(entityState, requestApi);
   const schedulePostApi = createScreenSchedulePostApiFeature(entityState, requestApi);
+  const screenLockPinPostApi = createScreenLockPinPostApiFeature(requestApi);
   const clockBarPostApi = createClockBarPostApiFeature(entityState, requestApi);
   configurationPersistence.connectRequestApi(requestApi);
   configurationCodec.connectRequestApi(requestApi);
@@ -886,12 +889,15 @@ function composeApplicationContext(): ApplicationContext {
   }, runtime, firmwareVersion, firmwareUpdate, c6Firmware, shell, requestApi,
   stateLoader, firmwarePostApi, artworkPostApi, publicFirmwareInstall, fields,
   settingsHelpers);
+  const screenLockSection = createSettingsScreenLockSectionFeature(
+    screenLockPinPostApi, fields, shell, settingsHelpers,
+  );
   settingsPage = createSettingsPageFeature(
     configurationCodec, runtime, core, layout, environment, screenScheduleState,
     screensaverTimeout, screenRotation, appearance, clockBarState, entityState,
     shell, requestApi, statusPreview, artworkPostApi, schedulePostApi,
     clockBarPostApi, fields, settingsHelpers, scheduleSection, coverArtSection,
-    systemSection, preview,
+    systemSection, screenLockSection, preview,
   );
   requestApi.connectReconnect(appEvents.connect);
   // Start after composition; the service retries on a later Settings visit if offline.
