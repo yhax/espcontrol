@@ -27,8 +27,13 @@
 #include "panel_config_write_endpoint.h"
 #include "panel_config_http_context.h"
 #include "panel_identity_endpoint.h"
-#include "screen_lock_pin_endpoint.h"
 #include "button_grid.h"
+// screen_lock_pin_endpoint.h pulls in screen_lock_state.h, which is only
+// meant to be included as part of button_grid.h's chain (it uses types like
+// BtnSlot/ParsedCfg that button_grid.h defines first) -- keep this include
+// after button_grid.h so #pragma once doesn't lock in a premature, broken
+// first inclusion of screen_lock_state.h.
+#include "screen_lock_pin_endpoint.h"
 
 extern "C" void espcontrol_register_web_server_handlers(
     esphome::web_server_idf::AsyncWebServer *server) {
