@@ -101,6 +101,7 @@ substitutions:
   entity_screen_nighttime_brightness: "Screen: Nighttime Brightness"
   entity_screen_brightness_dawn_time: "Screen: Brightness Dawn Time"
   entity_screen_brightness_dusk_time: "Screen: Brightness Dusk Time"
+  entity_screen_boot_behavior: "Screen: Power-On Display"
   entity_firmware_version: "Firmware: Version"
   entity_firmware_update: "Firmware: Update"
   entity_firmware_check_for_update: "Firmware: Check for Update"

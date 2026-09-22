@@ -73,6 +73,11 @@ esphome:
         - lvgl.resume:
         - script.execute: clock_bar_hide
         - lambda: |-
+            // Screen Boot Behavior is only meaningful once per boot: it stops
+            // mattering forever, for this power cycle, the moment the panel is
+            // first touched (see screensaver_wake).
+            id(screen_boot_dark_pending) = !id(screen_boot_on_switch).state;
+        - lambda: |-
             lv_label_set_text(id(loading_status_title), espcontrol_i18n("Starting up"));
             lv_label_set_text(id(loading_status_label), espcontrol_i18n("Booting"));
         - lvgl.page.show: loading_page
@@ -103,13 +108,15 @@ esphome:
               lambda: |-
                 return wifi::global_wifi_component->has_sta() &&
                        (id(espcontrol_app).display().target_schedule_inactive() ||
+                        id(screen_boot_dark_pending) ||
                         screen_schedule_waiting_for_time(
                           id(screen_schedule_trigger).state,
                           id(schedule_enabled).state,
                           panel_time_or_fallback(id(panel_time).now(), id(homeassistant_time).now()).is_valid()));
             then:
               # Expected on boot when schedule logic says the panel should
-              # remain dark, or while time is not ready enough to decide.
+              # remain dark, screen boot behavior is off and it has not been
+              # touched yet, or while time is not ready enough to decide.
               - script.execute: backlight_force_display_off
             else:
               - script.execute:

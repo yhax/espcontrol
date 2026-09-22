@@ -26,6 +26,7 @@ export interface ApplicationApiFeature {
     postSwitch(name?: string, on?: boolean): Promise<any>;
     postScreensaverMode(value?: any): Promise<any>;
     postFirmwareAutoUpdate(on?: boolean): void;
+    postScreenBootOn(on?: boolean): void;
     postC6FirmwareAutoUpdate(on?: boolean): void;
     postFirmwareUpdateFrequency(value?: any): void;
     postNumber(name?: string, value?: any): Promise<any>;
@@ -170,6 +171,9 @@ export function createApplicationApiFeature(
     function postFirmwareAutoUpdate(this: any, on?: any) {
         return postSwitchWithObjectIds(entityName("firmware_auto_update"), entityObjectIds("firmware_auto_update"), on);
     }
+    function postScreenBootOn(this: any, on?: any) {
+        return postSwitchWithObjectIds(entityName("screen_boot_behavior"), entityObjectIds("screen_boot_behavior"), on);
+    }
     function postC6FirmwareAutoUpdate(this: any, on?: any) {
         return postSwitchWithObjectIds(entityName("esp32_c6_auto_update"), entityObjectIds("esp32_c6_auto_update"), on);
     }
@@ -283,6 +287,7 @@ export function createApplicationApiFeature(
         postSwitch,
         postScreensaverMode,
         postFirmwareAutoUpdate,
+        postScreenBootOn,
         postC6FirmwareAutoUpdate,
         postFirmwareUpdateFrequency,
         postNumber,

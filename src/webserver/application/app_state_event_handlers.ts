@@ -394,6 +394,11 @@ export function createAppStateEventHandlersFeature(
                 state.brightnessDuskTime = normalizeTimeOfDay(val, "18:00");
                 syncScreenScheduleUi();
             },
+            "switch-screen__power_on_display": function (this: any, val?: any, d?: any) {
+                state.screenBootOn = d.value === true || val === "ON";
+                if (els.setScreenBootOn)
+                    els.setScreenBootOn.checked = state.screenBootOn;
+            },
             "switch-screen__schedule_enabled": function (this: any, val?: any, d?: any) {
                 state.scheduleEnabled = d.value === true || val === "ON";
                 if (!state._scheduleTriggerReceived) {
