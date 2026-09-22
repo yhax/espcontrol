@@ -36,7 +36,7 @@ By default, tapping a locked Screen Lock card unlocks it immediately. If you wan
 
 Once a PIN is set:
 
-- Unlocking -- whether by tapping the Screen Lock card, waking the panel from the screensaver, or powering it on -- shows a keypad instead of unlocking right away. The keypad is a phone-style dial pad: 0-9, with 0 centered under the 3x3 grid of 1-9.
+- Unlocking -- whether by tapping the Screen Lock card, waking the panel from the screensaver, or powering it on -- shows a keypad instead of unlocking right away. The keypad is a phone-style dial pad: 0-9, with 0 centered under the 3x3 grid of 1-9. Tapping a digit briefly highlights it in the panel's accent colour to confirm the tap registered.
 - Entering the correct PIN dismisses the keypad and returns to the screen that was showing before the panel locked.
 - Entering the wrong PIN flashes the keypad red for a moment and clears the attempt so you can try again.
 - The locked state survives a reboot or a firmware update: if the panel was locked when it lost power, it comes back locked and asks for the PIN again.

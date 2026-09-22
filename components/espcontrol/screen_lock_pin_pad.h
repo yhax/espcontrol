@@ -12,7 +12,6 @@
 
 struct ScreenLockPinPadUi {
   lv_obj_t *overlay = nullptr;
-  std::array<lv_obj_t *, SCREEN_LOCK_PIN_LENGTH> dots{};
   std::array<lv_obj_t *, 10> keys{};
   std::string buffer;
   bool flashing = false;
@@ -26,20 +25,6 @@ inline ScreenLockPinPadUi &screen_lock_pin_pad_ui() {
 
 inline bool screen_lock_pin_pad_showing() {
   return screen_lock_pin_pad_ui().overlay != nullptr;
-}
-
-inline void screen_lock_pin_pad_set_dot_color(lv_obj_t *dot, uint32_t color) {
-  if (!dot) return;
-  lv_obj_set_style_bg_color(dot, lv_color_hex(color), LV_PART_MAIN);
-}
-
-inline void screen_lock_pin_pad_update_dots() {
-  ScreenLockPinPadUi &ui = screen_lock_pin_pad_ui();
-  for (size_t i = 0; i < ui.dots.size(); i++) {
-    bool filled = i < ui.buffer.size();
-    screen_lock_pin_pad_set_dot_color(
-      ui.dots[i], filled ? current_button_primary_color() : SECONDARY_GREY);
-  }
 }
 
 inline void screen_lock_pin_pad_hide() {
@@ -60,20 +45,16 @@ inline void screen_lock_pin_pad_flash_done_cb(lv_timer_t *timer) {
   if (!screen_lock_pin_pad_showing()) return;
   ui.flashing = false;
   ui.buffer.clear();
-  screen_lock_pin_pad_update_dots();
   for (lv_obj_t *key : ui.keys) {
     if (key) lv_obj_set_style_bg_color(key, lv_color_hex(SECONDARY_GREY), LV_PART_MAIN);
   }
 }
 
-// Holds the dots and keypad in red for a beat so a wrong PIN is unmistakable,
+// Holds the whole keypad in red for a beat so a wrong PIN is unmistakable,
 // then clears the attempt so the panel is ready for another try.
 inline void screen_lock_pin_pad_flash_wrong() {
   ScreenLockPinPadUi &ui = screen_lock_pin_pad_ui();
   ui.flashing = true;
-  for (lv_obj_t *dot : ui.dots) {
-    screen_lock_pin_pad_set_dot_color(dot, ALARM_TRIGGERED_COLOR);
-  }
   for (lv_obj_t *key : ui.keys) {
     if (key) lv_obj_set_style_bg_color(key, lv_color_hex(ALARM_TRIGGERED_COLOR), LV_PART_MAIN);
   }
@@ -97,20 +78,7 @@ inline void screen_lock_pin_pad_key_cb(lv_event_t *e) {
   const char *digit = static_cast<const char *>(lv_event_get_user_data(e));
   if (!digit) return;
   ui.buffer.push_back(digit[0]);
-  screen_lock_pin_pad_update_dots();
   if (ui.buffer.size() >= SCREEN_LOCK_PIN_LENGTH) screen_lock_pin_pad_submit();
-}
-
-inline lv_obj_t *screen_lock_pin_pad_create_dot(lv_obj_t *parent, lv_coord_t size) {
-  lv_obj_t *dot = lv_obj_create(parent);
-  lv_obj_set_size(dot, size, size);
-  lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-  lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, LV_PART_MAIN);
-  lv_obj_set_style_bg_color(dot, lv_color_hex(SECONDARY_GREY), LV_PART_MAIN);
-  lv_obj_set_style_border_width(dot, 0, LV_PART_MAIN);
-  lv_obj_clear_flag(dot, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_clear_flag(dot, LV_OBJ_FLAG_CLICKABLE);
-  return dot;
 }
 
 // A phone-style dial pad: 1-9 in a 3x3 grid, with 0 centered on its own row
@@ -127,10 +95,12 @@ static const char *const kScreenLockPinPadDigits[10] = {
 // be reached. It never offers a way to dismiss itself -- the only way out is
 // the correct PIN, which is the entire point of Screen Lock's PIN option.
 //
-// Layout works bottom-up from the smallest supported panel (480x480): the
-// title's real rendered height is measured first, and the keypad's key size
-// is then derived from whatever vertical space is actually left over, so it
-// always fits instead of assuming a fixed size that might not.
+// There is no "Enter Pin" label or progress dots: on a small square panel,
+// even a short label eats into the room four rows of keys need, so the
+// keypad is the entire screen. Each key highlights in the panel's accent
+// colour for as long as it's actually pressed -- LVGL's own pressed-state
+// styling -- as the only feedback that a tap registered, instead of a
+// separate indicator that has to fit somewhere too.
 inline void screen_lock_pin_pad_show() {
   if (screen_lock_pin_pad_showing()) return;
   ScreenLockPinPadUi &ui = screen_lock_pin_pad_ui();
@@ -153,64 +123,35 @@ inline void screen_lock_pin_pad_show() {
   lv_coord_t outer_inset = control_modal_scaled_px(20, short_side);
   if (outer_inset < 10) outer_inset = 10;
 
-  lv_obj_t *title = lv_label_create(ui.overlay);
-  lv_label_set_display_text(title, espcontrol_i18n("Enter Pin"));
-  lv_obj_set_style_text_color(title, lv_color_hex(DARK_TEXT_PRIMARY), LV_PART_MAIN);
-  lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  lv_obj_update_layout(title);
-  lv_coord_t title_h = lv_obj_get_height(title);
-  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, outer_inset);
-
-  lv_coord_t section_gap = control_modal_scaled_px(16, short_side);
-  if (section_gap < 8) section_gap = 8;
-  lv_coord_t dot_gap = control_modal_scaled_px(12, short_side);
-  if (dot_gap < 6) dot_gap = 6;
-  lv_coord_t dot_size = control_modal_scaled_px(16, short_side);
-  if (dot_size < 10) dot_size = 10;
-  if (dot_size > 22) dot_size = 22;
-
-  lv_coord_t dots_y = outer_inset + title_h + section_gap;
-  lv_coord_t dots_total_w =
-    dot_size * static_cast<lv_coord_t>(ui.dots.size()) +
-    dot_gap * static_cast<lv_coord_t>(ui.dots.size() - 1);
-  lv_coord_t dots_start_x = (sw - dots_total_w) / 2;
-  for (size_t i = 0; i < ui.dots.size(); i++) {
-    ui.dots[i] = screen_lock_pin_pad_create_dot(ui.overlay, dot_size);
-    lv_obj_set_pos(ui.dots[i],
-      dots_start_x + static_cast<lv_coord_t>(i) * (dot_size + dot_gap), dots_y);
-  }
-
-  // Whatever height remains below the dots (down to the bottom inset) is the
-  // entire budget for the 4-row keypad -- dividing it by the row count is
-  // what actually guarantees no overflow, rather than hoping a fixed
-  // reference size happens to fit.
-  lv_coord_t keypad_top = dots_y + dot_size + section_gap;
-  lv_coord_t keypad_bottom = sh - outer_inset;
-  lv_coord_t keypad_h = keypad_bottom - keypad_top;
-  if (keypad_h < 4 * 36) keypad_h = 4 * 36;  // defensive floor; not expected in practice
+  // The whole screen, minus the outer inset, is the keypad's budget --
+  // dividing it by the row/column count is what actually guarantees no
+  // overflow, rather than hoping a fixed reference size happens to fit.
+  lv_coord_t keypad_h = sh - outer_inset * 2;
   lv_coord_t keypad_w = sw - outer_inset * 2;
 
-  lv_coord_t key_gap = control_modal_scaled_px(12, short_side);
+  lv_coord_t key_gap = control_modal_scaled_px(14, short_side);
   if (key_gap < 6) key_gap = 6;
   lv_coord_t key_size_w = (keypad_w - key_gap * 2) / 3;
   lv_coord_t key_size_h = (keypad_h - key_gap * 3) / 4;
   lv_coord_t key_size = key_size_w < key_size_h ? key_size_w : key_size_h;
-  lv_coord_t max_key_size = control_modal_scaled_px(96, short_side);
-  if (max_key_size < 56) max_key_size = 56;
+  lv_coord_t max_key_size = control_modal_scaled_px(110, short_side);
+  if (max_key_size < 64) max_key_size = 64;
   if (key_size > max_key_size) key_size = max_key_size;
   if (key_size < 36) key_size = 36;
 
   lv_coord_t total_w = key_size * 3 + key_gap * 2;
   lv_coord_t total_h = key_size * 4 + key_gap * 3;
   lv_coord_t start_x = (sw - total_w) / 2;
-  lv_coord_t start_y = keypad_top + (keypad_h - total_h) / 2;
-  if (start_y < keypad_top) start_y = keypad_top;
+  lv_coord_t start_y = outer_inset + (keypad_h - total_h) / 2;
+  if (start_y < outer_inset) start_y = outer_inset;
 
+  uint32_t pressed_color = current_button_primary_color();
   for (int i = 0; i < 10; i++) {
     int row = i < 9 ? i / 3 : 3;
     int col = i < 9 ? i % 3 : 1;  // 0 centers under the middle column
     lv_obj_t *key_btn = control_modal_create_round_button(
       ui.overlay, key_size, kScreenLockPinPadDigits[i], nullptr, DARK_BORDER, SECONDARY_GREY);
+    control_modal_apply_pressed_fill_color(key_btn, pressed_color);
     ui.keys[i] = key_btn;
     lv_obj_set_pos(key_btn, start_x + col * (key_size + key_gap),
       start_y + row * (key_size + key_gap));
@@ -218,7 +159,6 @@ inline void screen_lock_pin_pad_show() {
       const_cast<char *>(kScreenLockPinPadDigits[i]));
   }
 
-  screen_lock_pin_pad_update_dots();
   lv_obj_move_foreground(ui.overlay);
 }
 
