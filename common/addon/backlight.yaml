@@ -1190,6 +1190,14 @@ script:
                   !id(espcontrol_app).display().current_mode_is(
                       espcontrol::DisplayMode::ACTIVE);
           then:
+            - lambda: |-
+                // A PIN-protected Screen Lock takes over the display instead
+                // of letting the panel resume whatever was showing before it
+                // slept, so the lock has to be cleared with the keypad before
+                // anything underneath is reachable again.
+                if (screen_lock_enabled() && screen_lock_requires_pin()) {
+                  screen_lock_pin_pad_show();
+                }
             - script.stop: screensaver_idle_check
             - if:
                 condition:

@@ -182,6 +182,13 @@ script:
                     return id(espcontrol_app).display().target_mode_is(
                         espcontrol::DisplayMode::ACTIVE);
             - lvgl.page.show: main_page
+            - lambda: |-
+                // A panel that was PIN-locked before it lost power (or was
+                // updated) comes back locked rather than defaulting open.
+                screen_lock_restore_persisted_state();
+                if (screen_lock_enabled() && screen_lock_requires_pin()) {
+                  screen_lock_pin_pad_show();
+                }
             - script.execute: clock_bar_apply
             - script.execute: screensaver_idle_check
           else:

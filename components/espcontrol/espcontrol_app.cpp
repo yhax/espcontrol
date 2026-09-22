@@ -27,6 +27,7 @@
 #include "panel_config_write_endpoint.h"
 #include "panel_config_http_context.h"
 #include "panel_identity_endpoint.h"
+#include "screen_lock_pin_endpoint.h"
 #include "button_grid.h"
 
 extern "C" void espcontrol_register_web_server_handlers(
@@ -40,6 +41,7 @@ extern "C" void espcontrol_register_web_server_handlers(
   espcontrol::configuration::register_panel_config_capabilities_endpoint(*server);
   espcontrol::configuration::register_panel_config_read_endpoint(*server);
   espcontrol::configuration::register_panel_config_write_endpoint(*server);
+  espcontrol::configuration::register_screen_lock_pin_endpoint(*server);
 #else
   (void) server;
 #endif

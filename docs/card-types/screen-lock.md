@@ -27,6 +27,24 @@ Screen Lock does not need an entity or any additional card settings. Its label a
 
 Screen Lock is different from a [Lock](/card-types/locks) card. **Lock** controls a Home Assistant `lock` entity such as a door lock. **Screen Lock** controls the touchscreen's local interaction state.
 
+## Requiring a PIN to Unlock
+
+By default, tapping a locked Screen Lock card unlocks it immediately. If you want more than a tap standing between a locked panel and its controls, set a 4-digit PIN from the panel's settings page:
+
+1. Open the panel's settings page from a browser on your network.
+2. Under **Display > Screen Lock PIN**, enter a PIN and confirm it, then save.
+
+Once a PIN is set:
+
+- Unlocking -- whether by tapping the Screen Lock card, waking the panel from the screensaver, or powering it on -- shows a keypad instead of unlocking right away. The keypad only offers the digits 1-9, arranged in a 3x3 grid, so a PIN is always 4 digits drawn from that range.
+- Entering the correct PIN dismisses the keypad and returns to the screen that was showing before the panel locked.
+- Entering the wrong PIN flashes the keypad red for a moment and clears the attempt so you can try again.
+- The locked state survives a reboot or a firmware update: if the panel was locked when it lost power, it comes back locked and asks for the PIN again.
+
+Removing the PIN from the settings page returns Screen Lock to its original tap-to-unlock behaviour.
+
+The PIN is stored on the panel as a salted hash, never as plain text, and it is never sent to Home Assistant or stored in the panel's backup/configuration data -- only the settings page can set or clear it. Because it is only 4 digits from a 9-digit keypad, it is meant to stop a passerby from casually poking at a shared panel, not to withstand someone with sustained physical access to the device.
+
 ## When to Use It
 
 Screen Lock is useful for hallway panels, bedside panels, child-accessible panels, or any location where accidental control changes would be annoying.

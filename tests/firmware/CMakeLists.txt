@@ -189,6 +189,12 @@ target_compile_options(display_mode_controller_test PRIVATE -Wall -Wextra -Werro
 target_include_directories(display_mode_controller_test PRIVATE ../../components/espcontrol)
 add_test(NAME display_mode_controller_test COMMAND display_mode_controller_test)
 
+add_executable(screen_lock_pin_test screen_lock_pin_test.cpp)
+target_compile_features(screen_lock_pin_test PRIVATE cxx_std_17)
+target_compile_options(screen_lock_pin_test PRIVATE -Wall -Wextra -Werror)
+target_include_directories(screen_lock_pin_test PRIVATE ../../components/espcontrol)
+add_test(NAME screen_lock_pin_test COMMAND screen_lock_pin_test)
+
 add_executable(backlight_fade_test backlight_fade_test.cpp)
 target_compile_features(backlight_fade_test PRIVATE cxx_std_17)
 target_compile_options(backlight_fade_test PRIVATE -Wall -Wextra -Werror)
