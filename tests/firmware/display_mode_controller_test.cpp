@@ -149,6 +149,21 @@ int main() {
   CHECK(!controller.request(DisplayRequestSource::BOOT_GUARD, DisplayMode::CLOCK));
   CHECK(controller.clear(DisplayRequestSource::BOOT_GUARD));
 
+  // Boot Dark is the "Screen Boot Behavior: Off" boot-time override. It beats
+  // the schedule but yields to boot guard and to a genuine user wake.
+  DisplayModeController boot_dark;
+  CHECK(boot_dark.request(DisplayRequestSource::SCREEN_SCHEDULE, DisplayMode::ACTIVE));
+  CHECK(boot_dark.request(DisplayRequestSource::BOOT_DARK, DisplayMode::DISPLAY_OFF));
+  CHECK(decision_is(boot_dark, DisplayMode::DISPLAY_OFF, DisplayRequestSource::BOOT_DARK));
+  CHECK(boot_dark.request(DisplayRequestSource::BOOT_GUARD, DisplayMode::DISPLAY_OFF));
+  CHECK(decision_is(boot_dark, DisplayMode::DISPLAY_OFF, DisplayRequestSource::BOOT_GUARD));
+  CHECK(boot_dark.clear(DisplayRequestSource::BOOT_GUARD));
+  CHECK(decision_is(boot_dark, DisplayMode::DISPLAY_OFF, DisplayRequestSource::BOOT_DARK));
+  CHECK(boot_dark.request(DisplayRequestSource::USER_WAKE, DisplayMode::ACTIVE));
+  CHECK(decision_is(boot_dark, DisplayMode::ACTIVE, DisplayRequestSource::USER_WAKE));
+  CHECK(boot_dark.clear(DisplayRequestSource::BOOT_DARK));
+  CHECK(decision_is(boot_dark, DisplayMode::ACTIVE, DisplayRequestSource::USER_WAKE));
+
   // Manual sleep removes a temporary wake regardless of request order, so
   // clearing manual sleep always re-resolves the live schedule.
   DisplayModeController manual_sleep;
@@ -190,6 +205,7 @@ int main() {
       {DisplayRequestSource::MEDIA_PLAYBACK, DisplayMode::COVER_ART},
       {DisplayRequestSource::SETUP_TIMEOUT, DisplayMode::SETUP_DIMMED},
       {DisplayRequestSource::USER_WAKE, DisplayMode::ACTIVE},
+      {DisplayRequestSource::BOOT_DARK, DisplayMode::DISPLAY_OFF},
   };
   for (const auto &path : clear_paths) {
     DisplayModeController isolated;

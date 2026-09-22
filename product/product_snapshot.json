@@ -11,7 +11,7 @@
   "summary": {
     "deviceProfiles": 8,
     "cardTypes": 43,
-    "entityNames": 101,
+    "entityNames": 102,
     "icons": 357,
     "structuralIcons": 22,
     "compatibilityFixtureGroups": 2
@@ -7332,6 +7332,19 @@
           "screen__brightness_dusk_time",
           "screen_brightness_dusk_time",
           "brightness_dusk_time"
+        ],
+        "groups": [
+          "settings"
+        ]
+      },
+      {
+        "key": "screen_boot_behavior",
+        "domain": "switch",
+        "name": "Screen: Power-On Display",
+        "objectIds": [
+          "screen__power_on_display",
+          "screen_power_on_display",
+          "screen_boot_on_switch"
         ],
         "groups": [
           "settings"

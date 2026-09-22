@@ -26,6 +26,7 @@ enum class DisplayRequestSource : uint8_t {
   MEDIA_PLAYBACK,
   SETUP_TIMEOUT,
   USER_WAKE,
+  BOOT_DARK,
 };
 
 enum class DisplayTakeoverKind : uint8_t {
@@ -138,6 +139,9 @@ class DisplayModeController {
     if (apply_source(DisplayRequestSource::MANUAL_SLEEP, result)) return result;
     if (apply_source(DisplayRequestSource::USER_WAKE, result)) return result;
     if (apply_source(DisplayRequestSource::BOOT_GUARD, result)) return result;
+    // Screen Boot Behavior set to Off: stay dark from power-up regardless of
+    // schedule/idle state until the first touch clears this request.
+    if (apply_source(DisplayRequestSource::BOOT_DARK, result)) return result;
     if (apply_source(DisplayRequestSource::SCREEN_SCHEDULE, result)) return result;
 
     if (takeover_active(DisplayTakeoverKind::INTERACTIVE)) {
@@ -288,6 +292,7 @@ class DisplayModeController {
     const DisplayTransition transition = resolve();
     return transition.target_mode != DisplayMode::ACTIVE &&
         (transition.winning_source == DisplayRequestSource::BOOT_GUARD ||
+         transition.winning_source == DisplayRequestSource::BOOT_DARK ||
          transition.winning_source == DisplayRequestSource::SCREEN_SCHEDULE);
   }
   const std::optional<DisplayRequestSource> &current_source() const {
@@ -303,6 +308,7 @@ class DisplayModeController {
         return mode == DisplayMode::ACTIVE;
       case DisplayRequestSource::BOOT_GUARD:
       case DisplayRequestSource::MANUAL_SLEEP:
+      case DisplayRequestSource::BOOT_DARK:
         return mode == DisplayMode::DISPLAY_OFF;
       case DisplayRequestSource::USER_WAKE:
         return mode == DisplayMode::ACTIVE;
@@ -334,7 +340,7 @@ class DisplayModeController {
     bool active{false};
   };
 
-  static constexpr std::size_t kRequestCount = 9;
+  static constexpr std::size_t kRequestCount = 10;
   static constexpr std::size_t kTakeoverCount = 2;
 
   static constexpr std::size_t source_index(DisplayRequestSource source) {
@@ -416,6 +422,7 @@ inline const char *display_request_source_name(
     case DisplayRequestSource::MEDIA_PLAYBACK: return "media_playback";
     case DisplayRequestSource::SETUP_TIMEOUT: return "setup_timeout";
     case DisplayRequestSource::USER_WAKE: return "user_wake";
+    case DisplayRequestSource::BOOT_DARK: return "boot_dark";
   }
   return "unknown";
 }

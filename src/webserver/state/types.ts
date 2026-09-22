@@ -177,6 +177,7 @@ export interface AppState {
   manualBrightnessVal: number;
   brightnessDawnTime: string;
   brightnessDuskTime: string;
+  screenBootOn: boolean;
   scheduleTrigger: string;
   _scheduleTriggerReceived: boolean;
   scheduleEnabled: boolean;

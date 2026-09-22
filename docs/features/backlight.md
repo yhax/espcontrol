@@ -27,6 +27,7 @@ Configured in the **Brightness** section of the **Settings** tab in [Setup](/fea
 - **Daytime Brightness** — shown in either automatic mode and sets the daytime level (10%–100%, default 100%).
 - **Nighttime Brightness** — shown in either automatic mode and sets the nighttime level (10%–100%, default 75%).
 - **Dawn / Dusk** — shown in Fixed times mode and decides when the panel switches between the day and night levels.
+- **Screen On at Power-Up** — on by default; turn off to keep the screen dark after a power cycle until it's touched. See [At Power-Up](#at-power-up) below.
 
 Sunrise and sunset times are derived from the timezone set in [Time Settings](/features/clock).
 
@@ -45,6 +46,15 @@ When the screensaver uses **Screen Dimmed**, Manual mode keeps the normal screen
 ## Screen Schedule
 
 The [screen schedule](/features/screen-schedule) can turn the physical backlight off, keep the panel dimmed, or show a clock at set hours. **Screen Off** uses the schedule's separate **When Woken** brightness during a temporary wake and can run the same invisible burn-in protection while dark. **Screen Dimmed** uses its own overnight brightness setting. **Clock** uses its own clock brightness setting.
+
+## At Power-Up
+
+**Screen On at Power-Up**, in the same Backlight section, decides what the panel does the moment it boots or comes back after a power cycle -- separately from brightness mode or schedule. It defaults to on.
+
+- **On** (default) -- the panel lights up normally as soon as it finishes booting, using whatever brightness or schedule setting would normally apply.
+- **Off** -- the backlight stays off and nothing is shown until the screen is touched. The first touch turns it on normally; it does not otherwise change brightness, schedule, or screensaver behaviour for the rest of that session.
+
+This only affects the instant right after power-up. It is exposed to Home Assistant as **Screen: Power-On Display**.
 
 ## Before Clock Sync
 

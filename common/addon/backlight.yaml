@@ -25,10 +25,26 @@ button:
       - script.wait: cover_art_pause_after_touch
       - script.execute: screensaver_wake
 
+switch:
+  - platform: template
+    name: "${entity_screen_boot_behavior}"
+    id: screen_boot_on_switch
+    entity_category: config
+    icon: "mdi:power"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
 globals:
   - id: manual_wake_ms
     type: uint32_t
     initial_value: '0'
+  # Whether the panel is still waiting for its first touch since power-up.
+  # Only meaningful while screen_boot_on_switch is off; recomputed from that
+  # switch's restored state at the start of every boot, then cleared for good
+  # by screensaver_wake the moment a touch is registered.
+  - id: screen_boot_dark_pending
+    type: bool
+    initial_value: 'false'
   - id: screensaver_wake_touch_guard_active
     type: bool
     initial_value: 'false'
@@ -459,6 +475,8 @@ script:
             controller.clear(espcontrol::DisplayRequestSource::SETUP_TIMEOUT);
           }
           set_request(espcontrol::DisplayRequestSource::BOOT_GUARD, waiting_for_time,
+                      espcontrol::DisplayMode::DISPLAY_OFF);
+          set_request(espcontrol::DisplayRequestSource::BOOT_DARK, id(screen_boot_dark_pending),
                       espcontrol::DisplayMode::DISPLAY_OFF);
           set_request(espcontrol::DisplayRequestSource::USER_WAKE,
                       id(manual_wake_ms) != 0, espcontrol::DisplayMode::ACTIVE);
@@ -1160,6 +1178,11 @@ script:
           id(espcontrol_app).display().clear(espcontrol::DisplayRequestSource::SETUP_TIMEOUT);
           id(espcontrol_app).display().clear(
               espcontrol::DisplayRequestSource::MANUAL_SLEEP);
+          // The first touch after power-up ends "Screen Boot Behavior: Off"
+          // for the rest of this boot -- it does not touch the persisted
+          // switch, only the one-time wait for a touch.
+          id(espcontrol_app).display().clear(espcontrol::DisplayRequestSource::BOOT_DARK);
+          id(screen_boot_dark_pending) = false;
           if (id(schedule_enabled).state) {
             auto now = panel_time_or_fallback(id(panel_time).now(), id(homeassistant_time).now());
             bool schedule_night = screen_schedule_night_active(

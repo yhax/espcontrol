@@ -601,6 +601,15 @@ export const ENTITY_CATALOG = {
         "brightness_dusk_time"
       ]
     },
+    "screen_boot_behavior": {
+      "domain": "switch",
+      "name": "Screen: Power-On Display",
+      "objectIds": [
+        "screen__power_on_display",
+        "screen_power_on_display",
+        "screen_boot_on_switch"
+      ]
+    },
     "firmware_version": {
       "domain": "text_sensor",
       "name": "Firmware: Version",
@@ -794,6 +803,7 @@ export const ENTITY_CATALOG = {
       "screen_nighttime_brightness",
       "screen_brightness_dawn_time",
       "screen_brightness_dusk_time",
+      "screen_boot_behavior",
       "firmware_version",
       "firmware_update",
       "firmware_check_for_update",
