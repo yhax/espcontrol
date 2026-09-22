@@ -7,9 +7,7 @@ export interface SettingsScreenLockSectionFeature {
     buildScreenLockSettingsCard(...args: any[]): any;
 }
 
-// Digits 1-9 only, no 0: the on-device keypad is a 3x3 grid of just those
-// digits, so a PIN containing 0 could never be entered on the panel itself.
-const SCREEN_LOCK_PIN_PATTERN = /^[1-9]{4}$/;
+const SCREEN_LOCK_PIN_PATTERN = /^[0-9]{4}$/;
 
 export function createSettingsScreenLockSectionFeature(
     pinApi: ScreenLockPinPostApiFeature,
@@ -38,7 +36,7 @@ export function createSettingsScreenLockSectionFeature(
         var pinField: any = document.createElement("div");
         pinField.className = "sp-field";
         pinField.appendChild(fieldLabel("New PIN", "sp-set-screen-lock-pin"));
-        var pinInput: any = textInput("sp-set-screen-lock-pin", "", "4 digits, 1-9");
+        var pinInput: any = textInput("sp-set-screen-lock-pin", "", "4 digits, 0-9");
         pinInput.type = "password";
         pinInput.inputMode = "numeric";
         pinInput.autocomplete = "off";
@@ -49,7 +47,7 @@ export function createSettingsScreenLockSectionFeature(
         var confirmField: any = document.createElement("div");
         confirmField.className = "sp-field";
         confirmField.appendChild(fieldLabel("Confirm PIN", "sp-set-screen-lock-pin-confirm"));
-        var confirmInput: any = textInput("sp-set-screen-lock-pin-confirm", "", "4 digits, 1-9");
+        var confirmInput: any = textInput("sp-set-screen-lock-pin-confirm", "", "4 digits, 0-9");
         confirmInput.type = "password";
         confirmInput.inputMode = "numeric";
         confirmInput.autocomplete = "off";
@@ -85,7 +83,7 @@ export function createSettingsScreenLockSectionFeature(
             var pin: any = pinInput.value.trim();
             var confirmValue: any = confirmInput.value.trim();
             if (!SCREEN_LOCK_PIN_PATTERN.test(pin)) {
-                errorText.textContent = "PIN must be exactly 4 digits, each between 1 and 9.";
+                errorText.textContent = "PIN must be exactly 4 digits.";
                 return;
             }
             if (pin !== confirmValue) {

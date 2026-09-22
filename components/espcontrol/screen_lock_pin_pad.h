@@ -13,7 +13,7 @@
 struct ScreenLockPinPadUi {
   lv_obj_t *overlay = nullptr;
   std::array<lv_obj_t *, SCREEN_LOCK_PIN_LENGTH> dots{};
-  std::array<lv_obj_t *, 9> keys{};
+  std::array<lv_obj_t *, 10> keys{};
   std::string buffer;
   bool flashing = false;
   lv_timer_t *flash_timer = nullptr;
@@ -176,12 +176,16 @@ inline void screen_lock_pin_pad_show() {
   lv_coord_t key_gap = control_modal_scaled_px(16, short_side);
   if (key_gap < 8) key_gap = 8;
 
-  static const char *kKeyDigits[9] = {
+  // A phone-style dial pad: 1-9 in a 3x3 grid, with 0 centered on its own
+  // row underneath.
+  static const char *kKeyDigits[10] = {
     "1", "2", "3",
     "4", "5", "6",
     "7", "8", "9",
+    "0",
   };
-  for (int row = 0; row < 3; row++) {
+  for (int row = 0; row < 4; row++) {
+    int cols_in_row = row < 3 ? 3 : 1;
     lv_obj_t *key_row = lv_obj_create(column);
     lv_obj_set_size(key_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(key_row, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -191,8 +195,8 @@ inline void screen_lock_pin_pad_show() {
     lv_obj_set_layout(key_row, LV_LAYOUT_FLEX);
     lv_obj_set_style_flex_flow(key_row, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
     lv_obj_clear_flag(key_row, LV_OBJ_FLAG_SCROLLABLE);
-    for (int col = 0; col < 3; col++) {
-      int index = row * 3 + col;
+    for (int col = 0; col < cols_in_row; col++) {
+      int index = row < 3 ? row * 3 + col : 9;
       lv_obj_t *key_btn = control_modal_create_round_button(
         key_row, key_size, kKeyDigits[index], nullptr, DARK_BORDER, SECONDARY_GREY);
       ui.keys[index] = key_btn;

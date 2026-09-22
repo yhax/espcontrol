@@ -27,11 +27,11 @@ namespace espcontrol {
 // update only replaces the app partition, so this survives updates the same
 // way WiFi credentials and other ESPHome-managed NVS state does.
 //
-// A 4-digit PIN drawn from the digits 1-9 is a small keyspace (9^4 = 6,561
-// combinations). Hashing it keeps a casual flash read from showing the PIN
-// in the clear, but it is not a defense against a determined attacker with
-// physical access to the device. Screen Lock remains a local interaction
-// guard, not a replacement for Home Assistant's own security.
+// A 4-digit PIN is a small keyspace (10^4 = 10,000 combinations). Hashing it
+// keeps a casual flash read from showing the PIN in the clear, but it is not
+// a defense against a determined attacker with physical access to the
+// device. Screen Lock remains a local interaction guard, not a replacement
+// for Home Assistant's own security.
 class ScreenLockPinStore {
  public:
   bool begin() {

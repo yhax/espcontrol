@@ -36,14 +36,14 @@ By default, tapping a locked Screen Lock card unlocks it immediately. If you wan
 
 Once a PIN is set:
 
-- Unlocking -- whether by tapping the Screen Lock card, waking the panel from the screensaver, or powering it on -- shows a keypad instead of unlocking right away. The keypad only offers the digits 1-9, arranged in a 3x3 grid, so a PIN is always 4 digits drawn from that range.
+- Unlocking -- whether by tapping the Screen Lock card, waking the panel from the screensaver, or powering it on -- shows a keypad instead of unlocking right away. The keypad is a phone-style dial pad: 0-9, with 0 centered under the 3x3 grid of 1-9.
 - Entering the correct PIN dismisses the keypad and returns to the screen that was showing before the panel locked.
 - Entering the wrong PIN flashes the keypad red for a moment and clears the attempt so you can try again.
 - The locked state survives a reboot or a firmware update: if the panel was locked when it lost power, it comes back locked and asks for the PIN again.
 
 Removing the PIN from the settings page returns Screen Lock to its original tap-to-unlock behaviour.
 
-The PIN is stored on the panel as a salted hash, never as plain text, and it is never sent to Home Assistant or stored in the panel's backup/configuration data -- only the settings page can set or clear it. Because it is only 4 digits from a 9-digit keypad, it is meant to stop a passerby from casually poking at a shared panel, not to withstand someone with sustained physical access to the device.
+The PIN is stored on the panel as a salted hash, never as plain text, and it is never sent to Home Assistant or stored in the panel's backup/configuration data -- only the settings page can set or clear it. Because it is only a 4-digit PIN, it is meant to stop a passerby from casually poking at a shared panel, not to withstand someone with sustained physical access to the device.
 
 ## When to Use It
 

@@ -87,7 +87,7 @@ class ScreenLockPinHandler final : public esphome::web_server_idf::AsyncWebHandl
     }
     if (!screen_lock_pin_format_valid(pin)) {
       httpd_resp_send_err(raw_request, HTTPD_400_BAD_REQUEST,
-                          "PIN must be 4 digits, each between 1 and 9");
+                          "PIN must be exactly 4 digits");
       return;
     }
     if (!espcontrol::screen_lock_pin_set(pin)) {
